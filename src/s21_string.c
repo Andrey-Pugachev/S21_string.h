@@ -186,6 +186,174 @@ char* s21_strstr(const char* haystack, const char* needle) {
     return s21_NULL;
 }
 
-// char* s21_strtok(char* str, const char* delim) {
+char* s21_strtok(char* str, const char* delim) {
+    static char *separatedString = s21_NULL;
+    int flag = 0;
+    if (str != s21_NULL)
+        separatedString = str;
+    if (separatedString) {
+        str = separatedString + s21_strspn(separatedString, delim);
+        separatedString = str + s21_strcspn(str, delim);
+        if (separatedString == str) {
+            separatedString = s21_NULL;
+            flag = 1;
+        } else
+        separatedString = *separatedString ? *separatedString = 0, separatedString + 1 : 0;
+    }
+    return flag == 1 ? s21_NULL : str;
+}
 
+void* s21_memcpy(void* dest, const void* src, s21_size_t n) {
+    char* charDest = (char*)dest;
+    char* charSrc = (char*)src;
+    for (s21_size_t i = 0; i < n; i++)
+        *(charDest + i) = *(charSrc + i);
+    return dest;
+}
+
+// void* s21_memmove(void* dest, const void* src, s21_size_t n) { //Узнать почему каллочим место под n байт а не n+1 куда денем '\0'?????? и в чем разница между ней и memcpy()
+//     char *tmpString;
+//     tmpString = (char *)calloc(n, sizeof(char));
+//     s21_memcpy(tmpString, src, n);
+//     s21_memcpy(dest, tmpString, n);
+//     free(tmtmpStringp);
+//     return dest;
 // }
+
+void* s21_memset(void* str, int c, s21_size_t n) {
+    for (s21_size_t i = 0; i < n; i++)
+        *((char *)str + i) = c;
+  return str;
+}
+
+void* s21_memchr(const void* str, int c, s21_size_t n) { //Как измерить длинну строки ыек6 что бы не выйти за еъё приделы если n будет больше её длинны? 
+    for (s21_size_t i = 0; i < n; i++)
+        if (*((char*)str + i) == c)
+            return (void*)(str + i);
+    return s21_NULL;
+}
+
+int s21_memcmp(const void* str1, const void* str2, s21_size_t n) { //Что если n больше самой строки, не выйдем ли мы за пределы строки и не будет ли segfault?
+    int result = 0;
+    char *str1Tmp = (char *)str1;
+    char *str2Tmp = (char *)str2;
+    for (s21_size_t i = 0; i < n; i++)
+        if (*(str1Tmp + i) != *(str2Tmp + i)) {
+            result = *(str1Tmp + i) - *(str2Tmp + i);
+            break;
+        }
+    return result;
+}
+
+char* s21_strerror(int errnum) {
+    const char* errorList[] = ERRORS;
+    static char array[300] = {'\0'};
+    if (errnum >= 0 && errnum <= 106)
+        return (char*)errorList[errnum];
+    else {
+        sprintf(array, "Unknown error: %d", errnum);
+        return array;
+    }    
+}
+
+//==========================================================================================all additional funcs for sprintf()====================================
+int s21_atoi(char *str) {
+    int num = 0;
+    int isMinus = 0;
+    if (*str == '-') {
+        isMinus = 1;
+        str++;
+    }
+    for (; *str >= '0' && *str <= '9'; str++)
+        num = (num * 10) + (*str - '0');
+    return (isMinus) ? -num : num;
+}
+
+// int formatModesParser(const char** format, formatModes* flags) {
+   
+// }
+
+int s21_sprintf(char* str, const char* format, ...) {
+
+    va_list argumentPointer;
+    va_start(argumentPointer, format);
+
+    while (*format != '\0') {
+        if (*format != '%') {
+            *str = *format;
+            str++;
+            format++;
+        } else {
+            formatModes flags = {0};
+            format++;
+            //Считываем флаги (+,-,0, ,#)   
+            while (*format == '-' || *format == '+' || *format == ' ' || *format == '#' || *format == '0') {
+                if (*format == '-') {
+                    flags.minus = 1;
+                } else if (*format == '+') {
+                    flags.plus = 1;
+                } else if (*format == ' ') {
+                    flags.space = 1;
+                } else if (*format == '0') {
+                    flags.zero = 1;
+                } else if (*format == '#') {
+                    flags.lattice = 1;
+                }
+                format++;
+            }
+            //Считываем ширину выделяемого иоля (число, *)
+            while (*format == '*' || ('0' <= *format && *format <= '9')) {
+                if (*format == '*') {
+                    flags.width = va_arg(argumentPointer, int);
+                    format++;
+                    break;
+                }
+                char* strWidth = (char*)calloc(350, sizeof(char));
+                for (int i = 0; '0' <= *format && *format <= '9'; i++) {
+                    *(strWidth + i) = *format;
+                    format++;
+                }
+                flags.width = s21_atoi(strWidth);
+                free(strWidth);
+            }
+            //Считываем точность (.число, .*)
+            if (*format == '.') {
+                format++;
+                while (*format == '*' || ('0' <= *format && *format <= '9')) {
+                    if (*format == '*') {
+                        flags.accuracy = va_arg(argumentPointer, int);
+                        format++;
+                        break;
+                    }
+                    char* strAccuracy = (char*)calloc(350, sizeof(char));
+                    for (int i = 0; '0' <= *format && *format <= '9'; i++) {
+                        *(strAccuracy + i) = *format;
+                        format++;
+                    }
+                    flags.accuracy = s21_atoi(strAccuracy);
+                    free(strAccuracy);
+                }
+            }
+            //Считываем длинну (h,l,L)
+            if (*format == 'h' || *format == 'l' || *format == 'L') {
+                flags.len = *format;
+                format++;
+            }
+
+
+
+            printf("minus - %d\n", flags.minus);
+            printf("plus - %d\n", flags.plus);
+            printf("space - %d\n", flags.space);
+            printf("lattice - %d\n", flags.lattice);
+            printf("zero - %d\n", flags.zero);
+            printf("len - %c\n", flags.len);
+            puts("");
+            printf("width - %d\n", flags.width);
+            printf("accuracy - %d\n", flags.accuracy);
+        }
+        va_end(argumentPointer);
+    }
+    return 0;
+}
+//================================================================================================================================================================
