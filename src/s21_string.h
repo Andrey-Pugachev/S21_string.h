@@ -14,7 +14,9 @@ typedef struct formatModes {
   int zero;
   int width;
   int accuracy;
+  int accuracyPoint;
   int len;
+  int placeHolder;
 } formatModes;
 
 #if defined(__APPLE__) || defined(__MACH__)
@@ -160,7 +162,11 @@ char* s21_strncat(char* dest, const char* src, s21_size_t n);
 
 
 int s21_atoi(char *str);
-//int formatModesParser(const char** format, formatModes* flags);
+int s21_itoa(long long num, char** str); //Возвращает колличество переведенных элементов.
+void writeFromFormatString(char** str, const char** format);
+void formatModesParser(const char** format, formatModes* flags, va_list* argumentPointer);
+int intNumberLengthCounter(long long numberFromArgument); //Возвращает колличесто цыфр вмесет со знаком.
+void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer);
 
 int s21_sprintf(char* str, const char* format, ...);
 

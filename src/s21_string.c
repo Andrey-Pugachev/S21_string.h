@@ -269,91 +269,224 @@ int s21_atoi(char *str) {
     return (isMinus) ? -num : num;
 }
 
-// int formatModesParser(const char** format, formatModes* flags) {
-   
-// }
+
+
+int s21_itoa(long long num, char** str) { //Надо доработать обработку отрицательного числа.
+    int count = 0;
+    int numberOfdigits = intNumberLengthCounter(num);
+    numberOfdigits++;
+    char number[numberOfdigits];
+    for (int i = 0; i < numberOfdigits; i++)
+        number[i] = '\0';
+    int i = 0;
+    while (num > 0) {
+        number[i] = (num % 10);
+        num = num / 10;
+        i++;
+    }
+    while (i > 0) {
+        i--;
+        **str = ('0' + number[i]);
+        *str = *str +1;
+        count++;
+    }
+    return count;
+}
+
+
+
+void writeFromFormatString(char** str, const char** format) {
+    **str = **format;
+    *str = *str +1;
+    *format = *format + 1;
+}
+
+
+
+void formatModesParser(const char** format, formatModes* flags, va_list* argumentPointer) {   
+    while (**format == '-' || **format == '+' || **format == ' ' || **format == '#' || **format == '0') {
+        if (**format == '-') {
+            flags->minus = 1;
+        } else if (**format == '+') {
+            flags->plus = 1;
+        } else if (**format == ' ') {
+            flags->space = 1;
+        } else if (**format == '0') {
+            flags->zero = 1;
+        } else if (**format == '#') {
+            flags->lattice = 1;
+        }
+        *format = *format + 1;
+    }
+    while (**format == '*' || ('0' <= **format && **format <= '9')) {
+        if (**format == '*') {
+            flags->width = va_arg(*argumentPointer, int);
+            *format = *format + 1;
+            break;
+        }
+        char* strWidth = (char*)calloc(350, sizeof(char));
+        for (int i = 0; '0' <= **format && **format <= '9'; i++) {
+            *(strWidth + i) = **format;
+            *format = *format + 1;
+        }
+        flags->width = s21_atoi(strWidth);
+        free(strWidth);
+    }
+    if (**format == '.') {
+        flags->accuracyPoint = 1;
+        *format = *format + 1;
+        while (**format == '*' || ('0' <= **format && **format <= '9')) {
+            if (**format == '*') {
+                flags->accuracy = va_arg(*argumentPointer, int);
+                *format = *format + 1;
+                break;
+            }
+            char* strAccuracy = (char*)calloc(350, sizeof(char));
+            for (int i = 0; '0' <= **format && **format <= '9'; i++) {
+                *(strAccuracy + i) = **format;
+                *format = *format + 1;
+            }
+            flags->accuracy = s21_atoi(strAccuracy);
+            free(strAccuracy);
+        }
+    }
+    if (**format == 'h' || **format == 'l' || **format == 'L') {
+        flags->len = **format;
+        *format = *format + 1;
+    }
+    flags->placeHolder = **format;
+    *format = *format + 1;
+}
+
+
+
+int intNumberLengthCounter(long long numberFromArgument){
+    int count = 0;
+    if (numberFromArgument < 0) {
+        numberFromArgument = -numberFromArgument;
+        count++;
+    }
+    for (; numberFromArgument > 9; numberFromArgument = numberFromArgument / 10)
+        count++;
+    count++;
+    return count;
+}
+
+
+
+void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer) {
+    if (flags->placeHolder == 'c') {
+        **str = (char)va_arg(*argumentPointer, int);
+        *str = *str + 1;
+    } else if (flags->placeHolder == 'd' || flags->placeHolder == 'i') {
+        long long numberFromArgument = va_arg(*argumentPointer, long long);
+        int lengthOfNumber = intNumberLengthCounter(numberFromArgument);
+        if (flags->space)
+            flags->plus = 0;
+        if (flags->accuracyPoint)
+            flags->zero = 0;
+        if (flags->minus) {
+            if (numberFromArgument < 0) {
+                **str = '-';
+                *str = *str + 1;
+                lengthOfNumber--;
+            } else {
+                if (flags->plus) {
+                    **str = '+';
+                    *str = *str + 1;
+                }
+                if (flags->space) {
+                    **str = ' ';
+                    *str = *str + 1;
+                }
+            }
+            if (flags->accuracy > lengthOfNumber) {
+                for (int i = 0; i < (flags->accuracy - lengthOfNumber); i++) {
+                    **str = '0';
+                    *str = *str + 1;
+                }
+            }
+            long long tmpNumberFromArgument = 0;
+            if (numberFromArgument < 0)
+                tmpNumberFromArgument = -numberFromArgument;
+            else
+                tmpNumberFromArgument = numberFromArgument;
+            s21_itoa(tmpNumberFromArgument, str);
+            if (flags->accuracy >= lengthOfNumber) {
+                if (flags->width > flags->accuracy) {
+                    for (int i = 0; i < (flags->width - flags->accuracy); i++) {
+                        **str = ' ';
+                        *str = *str + 1;
+                    }
+                }    
+            } else {
+                if (flags->width > lengthOfNumber) {
+                    for (int i = 0; i < (flags->width - lengthOfNumber); i++) {
+                        **str = ' ';
+                        *str = *str + 1;                    
+                    }
+                }
+            }    
+        } else {
+            if (flags->accuracy > lengthOfNumber) {
+                if (flags->width > flags->accuracy) {
+                    if (numberFromArgument < 0) {
+                        for (int i = 0; i < (flags->width - (flags->accuracy + 1)); i++) {
+                            **str = ' ';
+                            *str = *str + 1;
+                        }
+                        **str = '-';
+                        *str = *str + 1;
+                    } else {
+                        if (flags->space) {
+                            for (int i = 0; i < (flags->width - (flags->accuracy)); i++) {
+                                **str = ' ';
+                                *str = *str + 1;
+                            }    
+                        }
+                        if (flags->plus) {
+                            for (int i = 0; i < (flags->width - (flags->accuracy + 1)); i++) {
+                                **str = ' ';
+                                *str = *str + 1;
+                            }
+                            **str = '+';
+                            *str = *str + 1;
+                        }
+                    }
+                }
+                
+            }
+        }
+
+
+    }
+}
+
+
 
 int s21_sprintf(char* str, const char* format, ...) {
-
     va_list argumentPointer;
     va_start(argumentPointer, format);
-
     while (*format != '\0') {
         if (*format != '%') {
-            *str = *format;
-            str++;
-            format++;
+            writeFromFormatString(&str, &format);
         } else {
             formatModes flags = {0};
             format++;
-            //Считываем флаги (+,-,0, ,#)   
-            while (*format == '-' || *format == '+' || *format == ' ' || *format == '#' || *format == '0') {
-                if (*format == '-') {
-                    flags.minus = 1;
-                } else if (*format == '+') {
-                    flags.plus = 1;
-                } else if (*format == ' ') {
-                    flags.space = 1;
-                } else if (*format == '0') {
-                    flags.zero = 1;
-                } else if (*format == '#') {
-                    flags.lattice = 1;
-                }
-                format++;
-            }
-            //Считываем ширину выделяемого иоля (число, *)
-            while (*format == '*' || ('0' <= *format && *format <= '9')) {
-                if (*format == '*') {
-                    flags.width = va_arg(argumentPointer, int);
-                    format++;
-                    break;
-                }
-                char* strWidth = (char*)calloc(350, sizeof(char));
-                for (int i = 0; '0' <= *format && *format <= '9'; i++) {
-                    *(strWidth + i) = *format;
-                    format++;
-                }
-                flags.width = s21_atoi(strWidth);
-                free(strWidth);
-            }
-            //Считываем точность (.число, .*)
-            if (*format == '.') {
-                format++;
-                while (*format == '*' || ('0' <= *format && *format <= '9')) {
-                    if (*format == '*') {
-                        flags.accuracy = va_arg(argumentPointer, int);
-                        format++;
-                        break;
-                    }
-                    char* strAccuracy = (char*)calloc(350, sizeof(char));
-                    for (int i = 0; '0' <= *format && *format <= '9'; i++) {
-                        *(strAccuracy + i) = *format;
-                        format++;
-                    }
-                    flags.accuracy = s21_atoi(strAccuracy);
-                    free(strAccuracy);
-                }
-            }
-            //Считываем длинну (h,l,L)
-            if (*format == 'h' || *format == 'l' || *format == 'L') {
-                flags.len = *format;
-                format++;
-            }
+            if (*format == '%')
+                writeFromFormatString(&str, &format);
+            else
+                formatModesParser(&format, &flags, &argumentPointer);
+            writeFromArgument(&str, &flags, &argumentPointer);
 
 
 
-            printf("minus - %d\n", flags.minus);
-            printf("plus - %d\n", flags.plus);
-            printf("space - %d\n", flags.space);
-            printf("lattice - %d\n", flags.lattice);
-            printf("zero - %d\n", flags.zero);
-            printf("len - %c\n", flags.len);
-            puts("");
-            printf("width - %d\n", flags.width);
-            printf("accuracy - %d\n", flags.accuracy);
         }
         va_end(argumentPointer);
     }
     return 0;
 }
+
+
+//1. Отаботать случай ноля в качестве целочисленного значения.
 //================================================================================================================================================================
