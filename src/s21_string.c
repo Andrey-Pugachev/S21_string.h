@@ -256,8 +256,19 @@ char* s21_strerror(int errnum) {
     }    
 }
 
+
+
+
+
+
+
+
+
+
+
+
 //==========================================================================================all additional funcs for sprintf()====================================
-int s21_atoi(char *str) {
+int s21_atoi(char *str) { //Модернезировать для преобразования во все системы исчисления long long
     int num = 0;
     int isMinus = 0;
     if (*str == '-') {
@@ -269,16 +280,20 @@ int s21_atoi(char *str) {
     return (isMinus) ? -num : num;
 }
 
-
-
 int s21_itoa(long long num, char** str) { //Надо доработать обработку отрицательного числа.
     int count = 0;
     int numberOfdigits = intNumberLengthCounter(num);
+    //printf("number of digits %d\n", numberOfdigits); //<===============
     numberOfdigits++;
     char number[numberOfdigits];
     for (int i = 0; i < numberOfdigits; i++)
         number[i] = '\0';
     int i = 0;
+    if (num == 0) {
+        **str = '0';
+        *str = *str +1;
+        count++;
+    }
     while (num > 0) {
         number[i] = (num % 10);
         num = num / 10;
@@ -295,13 +310,64 @@ int s21_itoa(long long num, char** str) { //Надо доработать обр
 
 
 
+int s21_numToStr(long long num, char* str, int numSys, int saveMinus) {
+    int count = 0;
+    int arrLen = 0;
+    arrLen = (s21_intNumLen(num, numSys) + 1);
+    char digArr[arrLen];
+    for (int i = 0; i < arrLen; i++)
+        digArr[i] = '\0';
+    char* strTmp = str;
+    if (num < 0) {
+        num = -num;
+        if (saveMinus) {
+            *strTmp = '-';
+            strTmp++;
+            *strTmp = '\0';
+            count++;
+        } 
+    }
+    if (num == 0) {
+        *strTmp = '0';
+        strTmp++;
+        *strTmp = '\0';
+        count++;
+    }
+    int i = 0;
+    int digit16 = 0;
+    while (num > 0) {
+        digit16 = num % numSys;
+        if (digit16 < 10)
+            digArr[i] = '0' + digit16;
+        else
+            digArr[i] = 'a' + (digit16 - 10);
+        num = num / numSys;
+        i++;
+    }
+    while (i > 0) {
+        i--;
+        *strTmp = digArr[i];
+        strTmp++;
+        count++;
+    }
+    return count;
+}
+
+int s21_intNumLen(long long num, int numSys) {
+    int count = 0;
+    if (num < 0)
+        num = - num;
+    for (; num > (numSys - 1); num = num / numSys)
+        count++;
+    count++;
+    return count;
+}
+
 void writeFromFormatString(char** str, const char** format) {
     **str = **format;
     *str = *str +1;
     *format = *format + 1;
 }
-
-
 
 void formatModesParser(const char** format, formatModes* flags, va_list* argumentPointer) {   
     while (**format == '-' || **format == '+' || **format == ' ' || **format == '#' || **format == '0') {
@@ -358,8 +424,6 @@ void formatModesParser(const char** format, formatModes* flags, va_list* argumen
     *format = *format + 1;
 }
 
-
-
 int intNumberLengthCounter(long long numberFromArgument){
     int count = 0;
     if (numberFromArgument < 0) {
@@ -374,22 +438,30 @@ int intNumberLengthCounter(long long numberFromArgument){
 
 
 
+
+
 void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer) {
+    //puts("enter in writeFromArgument()"); //<=================    
     if (flags->placeHolder == 'c') {
         **str = (char)va_arg(*argumentPointer, int);
         *str = *str + 1;
     } else if (flags->placeHolder == 'd' || flags->placeHolder == 'i') {
         long long numberFromArgument = va_arg(*argumentPointer, long long);
+        //printf("number from argument %lld\n", numberFromArgument); //<=================
         int lengthOfNumber = intNumberLengthCounter(numberFromArgument);
-        if (flags->space)
-            flags->plus = 0;
+        //printf("length of number %d\n", lengthOfNumber); //<=================
+        if (flags->plus)
+           flags->space = 0;
         if (flags->accuracyPoint)
             flags->zero = 0;
+//НАЛАЧИЕ ФЛАГА МИНУС #####################################################
         if (flags->minus) {
+    //ЧИСЛО ОТРИЦАТЕЛЬНОЕ #####################################################
             if (numberFromArgument < 0) {
                 **str = '-';
                 *str = *str + 1;
                 lengthOfNumber--;
+    //ЧИСЛО ПОЛОЖИТЕЛЬНОЕ #####################################################                    
             } else {
                 if (flags->plus) {
                     **str = '+';
@@ -400,63 +472,216 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer)
                     *str = *str + 1;
                 }
             }
+    //ТОЧНОСТЬ БОЛЬШЕ ДЛИННЫ ЧИСЛА #####################################################
             if (flags->accuracy > lengthOfNumber) {
                 for (int i = 0; i < (flags->accuracy - lengthOfNumber); i++) {
                     **str = '0';
                     *str = *str + 1;
+                    //printf("%d\n", i + 1); //<================
                 }
             }
+    //ПЕЧАТЬ САМОГО НОМЕРА БЕЗ ЗНАКА #####################################################
             long long tmpNumberFromArgument = 0;
             if (numberFromArgument < 0)
                 tmpNumberFromArgument = -numberFromArgument;
             else
                 tmpNumberFromArgument = numberFromArgument;
+            //printf("tmp number from argument %lld\n", tmpNumberFromArgument); //<=================    
             s21_itoa(tmpNumberFromArgument, str);
+    //ДОБИВАЕМ ШИРИНУ ПРОБЕЛАМИ #####################################################
             if (flags->accuracy >= lengthOfNumber) {
                 if (flags->width > flags->accuracy) {
-                    for (int i = 0; i < (flags->width - flags->accuracy); i++) {
-                        **str = ' ';
-                        *str = *str + 1;
-                    }
-                }    
-            } else {
-                if (flags->width > lengthOfNumber) {
-                    for (int i = 0; i < (flags->width - lengthOfNumber); i++) {
-                        **str = ' ';
-                        *str = *str + 1;                    
-                    }
-                }
-            }    
-        } else {
-            if (flags->accuracy > lengthOfNumber) {
-                if (flags->width > flags->accuracy) {
-                    if (numberFromArgument < 0) {
+                    if (numberFromArgument < 0 || flags->plus || flags->space) {
                         for (int i = 0; i < (flags->width - (flags->accuracy + 1)); i++) {
                             **str = ' ';
                             *str = *str + 1;
                         }
-                        **str = '-';
-                        *str = *str + 1;
                     } else {
-                        if (flags->space) {
-                            for (int i = 0; i < (flags->width - (flags->accuracy)); i++) {
-                                **str = ' ';
-                                *str = *str + 1;
-                            }    
-                        }
-                        if (flags->plus) {
-                            for (int i = 0; i < (flags->width - (flags->accuracy + 1)); i++) {
-                                **str = ' ';
-                                *str = *str + 1;
-                            }
-                            **str = '+';
+                        for (int i = 0; i < (flags->width - flags->accuracy); i++) {
+                            **str = ' ';
                             *str = *str + 1;
                         }
                     }
+                }    
+            } else {
+                if (flags->width > lengthOfNumber) {
+                    if (numberFromArgument < 0) {
+                        for (int i = 0; i < (flags->width - lengthOfNumber); i++) {
+                            **str = ' ';
+                            *str = *str + 1;
+                        }
+                    } else {
+                        if (flags->plus || flags->space) {
+                            for (int i = 0; i < (flags->width - (lengthOfNumber + 1)); i++) {
+                                **str = ' ';
+                                *str = *str + 1;
+                            }
+                        } else {
+                            for (int i = 0; i < (flags->width - lengthOfNumber); i++) {
+                                **str = ' ';
+                                *str = *str + 1;
+                            }
+                        }
+                    }
                 }
-                
+            } 
+//ОТСУТСТВИЕ ФЛАГА МИНУС #####################################################               
+        } else {
+            int amountOfZero = 0;
+            int amountOfSpace = 0;
+            long long tmpNumberFromArgument = 0;
+            if (numberFromArgument < 0)
+                tmpNumberFromArgument = -numberFromArgument;
+            else
+                tmpNumberFromArgument = numberFromArgument;
+            if (flags->accuracy > intNumberLengthCounter(tmpNumberFromArgument)) {
+                amountOfZero = flags->accuracy - intNumberLengthCounter(tmpNumberFromArgument);
+                if (flags->width > flags->accuracy) {
+                    amountOfSpace = flags->width - flags->accuracy;
+                }
+            } else {
+                if (flags->width > intNumberLengthCounter(tmpNumberFromArgument)) {
+                    amountOfSpace = flags->width - intNumberLengthCounter(tmpNumberFromArgument);
+                }
+            }
+            if (flags->zero) {
+                if (numberFromArgument < 0) {
+                    **str = '-';
+                    *str = *str + 1;
+                } else {
+                    if (flags->plus) {
+                        **str = '+';
+                        *str = *str + 1;
+                    }
+                    if (flags->space) {
+                        **str = ' ';
+                        *str = *str + 1;
+                    }
+                }
+                if (numberFromArgument < 0)
+                    tmpNumberFromArgument = -numberFromArgument;
+                else
+                    tmpNumberFromArgument = numberFromArgument;    
+                if (flags->width > intNumberLengthCounter(tmpNumberFromArgument)) {
+                    if (numberFromArgument < 0)
+                        tmpNumberFromArgument = -numberFromArgument;
+                    else
+                        tmpNumberFromArgument = numberFromArgument;
+                    int zeros = flags->width - intNumberLengthCounter(tmpNumberFromArgument);
+                    if (numberFromArgument < 0 || flags->plus || flags->space)
+                        zeros--;
+                    for (int i = 0; i < zeros; i++) {
+                        **str = '0';
+                        *str = *str + 1;
+                    }
+                }
+                if (numberFromArgument < 0)
+                    tmpNumberFromArgument = -numberFromArgument;
+                else
+                    tmpNumberFromArgument = numberFromArgument;
+                s21_itoa(tmpNumberFromArgument, str);
+            } else {
+                if (numberFromArgument < 0 || flags->plus || flags->space) {
+                    amountOfSpace--;
+                    for (int i = 0; i < amountOfSpace; i++) {
+                        **str = ' ';
+                        *str = *str + 1;
+                    }
+                } else {
+                    for (int i = 0; i < amountOfSpace; i++) {
+                        **str = ' ';
+                        *str = *str + 1;
+                    }
+                }
+                if (numberFromArgument < 0) {
+                    **str = '-';
+                    *str = *str + 1;
+                } else {
+                    if (flags->plus) {
+                        **str = '+';
+                        *str = *str + 1;
+                    }
+                    if (flags->space) {
+                        **str = ' ';
+                        *str = *str + 1;
+                    }
+                }    
+                for (int i = 0; i < amountOfZero; i++) {
+                    **str = '0';
+                    *str = *str + 1;
+                }
+                if (numberFromArgument < 0)
+                    tmpNumberFromArgument = -numberFromArgument;
+                else
+                    tmpNumberFromArgument = numberFromArgument;
+                s21_itoa(tmpNumberFromArgument, str);
             }
         }
+    } else if (flags->placeHolder == 's') {
+        char* argString = va_arg(*argumentPointer, char*);
+        int strLength = (int)s21_strlen(argString);
+        int charCount = (flags->accuracy < strLength && flags->accuracyPoint) ? flags->accuracy : strLength;
+        if (flags->minus) {
+            for (int i = 0; i < charCount; i++) {
+                **str = *argString;
+                *str = *str + 1;
+                argString++;
+            }
+            if (flags->width > charCount) {
+                for (int i = 0; i < (flags->width - charCount); i++) {
+                    **str = ' ';
+                    *str = *str + 1;
+                }
+            }
+        } else {
+            if (flags->width > charCount) {
+                for (int i = 0; i < (flags->width - charCount); i++) {
+                    **str = ' ';
+                    *str = *str + 1;
+                }
+            }
+            for (int i = 0; i < charCount; i++) {
+                **str = *argString;
+                *str = *str + 1;
+                argString++;
+            }
+        }
+    } else if (flags->placeHolder == 'p') {
+        long long pointer = va_arg(*argumentPointer, long long);
+        int pointJump = 0;
+        if (flags->minus) {
+            **str = '0';
+            *str = *str + 1;
+            **str = 'x';
+            *str = *str + 1;
+            pointJump = s21_numToStr(pointer ,*str, 16, 0);
+            *str = *str + pointJump;
+            if (flags->width > 11) {
+                for (int i = 0; i < (flags->width - (s21_intNumLen(pointer, 16) + 2)); i++) {
+                    **str = ' ';
+                    *str = *str + 1;
+                }
+            }
+        } else {
+            if (flags->width > 11) {
+                for (int i = 0; i < (flags->width - (s21_intNumLen(pointer, 16) + 2)); i++) {
+                    **str = ' ';
+                    *str = *str + 1;
+                }
+            }
+            **str = '0';
+            *str = *str + 1;
+            **str = 'x';
+            *str = *str + 1;
+            pointJump = s21_numToStr(pointer ,*str, 16, 0);
+            *str = *str + pointJump;
+        }
+        printf("%d\n", s21_intNumLen(pointer, 16));
+        printf("%llx\n", pointer);
+        printf("%d\n", pointJump);
+    } else if (flags->placeHolder == 'p') {
+
+
 
 
     }
@@ -471,14 +696,15 @@ int s21_sprintf(char* str, const char* format, ...) {
         if (*format != '%') {
             writeFromFormatString(&str, &format);
         } else {
+
             formatModes flags = {0};
             format++;
             if (*format == '%')
                 writeFromFormatString(&str, &format);
-            else
+            else {
                 formatModesParser(&format, &flags, &argumentPointer);
-            writeFromArgument(&str, &flags, &argumentPointer);
-
+                writeFromArgument(&str, &flags, &argumentPointer);
+            }
 
 
         }
@@ -487,6 +713,4 @@ int s21_sprintf(char* str, const char* format, ...) {
     return 0;
 }
 
-
-//1. Отаботать случай ноля в качестве целочисленного значения.
 //================================================================================================================================================================

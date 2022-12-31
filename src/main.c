@@ -3,42 +3,26 @@
 //#include <limits.h>
 
 int main() {
-
-    // printf("CHAR_BIT   %d\n", CHAR_BIT);
-    // printf("SCHAR_MIN  %d\n", SCHAR_MIN);
-    // printf("SCHAR_MAX  %d\n", SCHAR_MAX);
-    // printf("UCHAR_MAX  %d\n", UCHAR_MAX);
-    // printf("CHAR_MIN   %d\n", CHAR_MIN);
-    // printf("CHAR_MAX   %d\n", CHAR_MAX);
-    // printf("MB_LEN_MAX %d\n", MB_LEN_MAX);
-    // printf("SHRT_MIN   %d\n", SHRT_MIN);
-    // printf("SHRT_MAX   %d\n", SHRT_MAX);
-    // printf("USHRT_MAX  %ds\n", USHRT_MAX);
-    // printf("INT_MIN    %d\n", INT_MIN);
-    // printf("INT_MAX    %d\n", INT_MAX);
-    // printf("UINT_MAX   %u\n", UINT_MAX);
-    // printf("LONG_MIN   %ld\n", LONG_MIN);
-    // printf("LONG_MAX   %ld\n", LONG_MAX);
-    // printf("ULONG_MAX  %lu\n", ULONG_MAX);
-    // printf("LLONG_MIN  %lld\n", LLONG_MIN);
-    // printf("LLONG_MAX  %lld\n", LLONG_MAX);
-    // printf("ULLONG_MAX %llu\n", ULLONG_MAX);
     
-
-
-
+    // char str1[100] = {'\0'};
+    // char str2[100] = {'\0'};
+    // char str3[100] = "Andrey"; 
+    // s21_sprintf(str1, "start %-20p end", str3);
+    // sprintf(str2, "start %-20p end", str3);
+    // printf("S21 %s\n", str1);
+    // printf("ORI %s\n", str2);
     
-    //char str[100] = {'\0'};
-    // printf("%s\n", str);
-    //s21_sprintf(str, "%d", 2);
-    // printf("%s\n", str);
+    printf("%o\n", 0x73a64c52);
     
-    // puts("");
-    // printf("%-.5d\n", -324);
-
-    // printf("%s\n", str);
-
-    printf("%5.3d\n", 5);
 
     return 0;
 }
+
+//ЗАДАЧИ:
+
+
+//Спецыфикатор %p  11
+/*
+минус - выравниваем по левой стороне выделенного поля
+ширина - размер выделяемого поля
+*/
