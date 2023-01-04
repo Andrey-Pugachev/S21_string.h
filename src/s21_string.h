@@ -161,18 +161,17 @@ char* s21_strcat(char* dest, const char* src);
 char* s21_strncat(char* dest, const char* src, s21_size_t n);
 
 
-int s21_atoi(char *str);
-int s21_itoa(long long num, char** str); //Возвращает колличество переведенных элементов.
-
-int s21_numToStr(long long num, char* str, int numSys, int saveMinus, int* countOfPrinted);
-int s21_intNumLen(long long num, int numSys);
-
-void writeFromFormatString(char** str, const char** format, int* countOfPrinted);
-void formatModesParser(const char** format, formatModes* flags, va_list* argumentPointer);
-int intNumberLengthCounter(long long numberFromArgument); //Возвращает колличесто цыфр вмесет со знаком.
-void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer, int* countOfPrinted);
 
 int s21_sprintf(char* str, const char* format, ...);
+
+int s21_atoi(char *str);
+int s21_numToStr(long long num, char* str, int numSys, int saveMinus, int* countOfPrinted, int isUppercaseX);
+int s21_intNumLen(long long num, int numSys);
+void formatModesParser(const char** format, formatModes* flags, va_list* argumentPointer);
+void writeFromFormatString(char** str, const char** format, int* countOfPrinted);
+void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer, int* countOfPrinted);
+
+
 
 
 
