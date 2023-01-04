@@ -695,6 +695,9 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
                 if (flags->zero) 
                     amountOfZeroes -= 2;
             }
+            if (numSys == 8 && flags->lattice)
+                if (flags->accuracy <= numLength)
+                    amountOfSpaces--;    
             for (int i = 0; i < amountOfSpaces; i++) {
                 **str = ' ';
                 *countOfPrinted = *countOfPrinted + 1;
@@ -703,10 +706,12 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
             }
             if (flags->lattice) {
                 if (numSys == 8) {
-                    **str = '0';
-                    *countOfPrinted = *countOfPrinted + 1;
-                    *str = *str + 1;
-                    **str = '\0';
+                    if (flags->accuracy <= numLength && !flags->zero) {
+                        **str = '0';
+                        *countOfPrinted = *countOfPrinted + 1;
+                        *str = *str + 1;
+                        **str = '\0';
+                    }
                 } else {
                     **str = '0';
                     *countOfPrinted = *countOfPrinted + 1;
