@@ -626,12 +626,6 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
             ArgNum = va_arg(*argumentPointer, unsigned int);
             numLength = s21_intNumLen(ArgNum, numSys); ///////////////// ЗАЧЕМ НУЖНО УТОЧНЕНИЕ ДЛИННЫ ТИПА
         }
-        int additionalnNumLen = 0;
-        if (flags->lattice)
-            additionalnNumLen = (numSys == 8) ? 1 : 2;
-
-
-////////
         if(flags->accuracyPoint) {
             if (flags->accuracy > numLength) {
                 amountOfZeroes = flags->accuracy - numLength;
@@ -644,11 +638,7 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
             amountOfZeroes = flags->width - numLength;
         else
             amountOfSpaces = flags->width - numLength;
-////////
-
-
         if (flags->minus) {
-
             if (numSys == 16 && flags->lattice)
                 amountOfSpaces -= 2;
             if (flags->lattice) {
@@ -687,9 +677,7 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
                 *str = *str + 1;
                 **str = '\0';
             }
-
         } else {
-
             if (numSys == 16 && flags->lattice) {
                 amountOfSpaces -= 2;
                 if (flags->zero) 
@@ -737,10 +725,124 @@ void writeFromArgument(char** str, formatModes* flags, va_list* argumentPointer,
             }
             *str = *str + pointJump;
         }
-
-
-
+//СПЕЦЫФИКАТОР ФОРМАТА  %id        
     } else if (flags->placeHolder == 'd' || flags->placeHolder == 'i') {
-    
-    }    
+        int isNegative = 0;
+        int numLength = 0;
+        int amountOfSpaces = 0;
+        int amountOfZeroes = 0;
+        int pointJump = 0;
+        int ArgNum = 0;
+        short ArgNumS = 0;
+        long ArgNumL = 0;
+        if (flags->accuracyPoint)
+            flags->zero = 0;
+        if (flags->plus)
+            flags->space = 0; 
+        if (flags->len == 'h') {
+            ArgNumS = va_arg(*argumentPointer, int);
+            numLength = s21_intNumLen(ArgNumS, 10); ///////////////// ЗАЧЕМ НУЖНО УТОЧНЕНИЕ ДЛИННЫ ТИПА
+            isNegative = (ArgNumS < 0) ? 1 : 0;
+        } else if (flags->len == 'l') {
+            ArgNumL = va_arg(*argumentPointer, long);
+            numLength = s21_intNumLen(ArgNumS, 10); ///////////////// ЗАЧЕМ НУЖНО УТОЧНЕНИЕ ДЛИННЫ ТИПА
+            isNegative = (ArgNumL < 0) ? 1 : 0;
+        } else {
+            ArgNum = va_arg(*argumentPointer, int);
+            numLength = s21_intNumLen(ArgNum, 10); ///////////////// ЗАЧЕМ НУЖНО УТОЧНЕНИЕ ДЛИННЫ ТИПА
+            isNegative = (ArgNum < 0) ? 1 : 0;
+        }
+        if(flags->accuracyPoint) {
+            if (flags->accuracy > numLength) {
+                amountOfZeroes = flags->accuracy - numLength;
+                if (flags->width > flags->accuracy)
+                     amountOfSpaces = flags->width - flags->accuracy;
+            } else 
+                if (flags->width > numLength)
+                    amountOfSpaces = flags->width - numLength;
+        } else if (flags->zero)
+            amountOfZeroes = flags->width - numLength;
+        else
+            amountOfSpaces = flags->width - numLength;
+        if (isNegative || flags->space || flags->plus)
+            amountOfSpaces--;
+        if (flags->minus) { 
+            if (flags->space) {
+                **str = (isNegative) ? '-' : ' ';;
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';            
+            } else if (isNegative) {
+                **str = '-';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            } else if (flags->plus) {
+                **str = (isNegative) ? '-' : '+';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';            
+            }
+            for (int i = 0; i < amountOfZeroes; i++) {
+                **str = '0';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            }
+            if (flags->len == 'h') {
+                pointJump = s21_numToStr(ArgNumS, *str, 10, 0, countOfPrinted, 0); /////////////////
+            } else if (flags->len == 'l') {
+                pointJump = s21_numToStr(ArgNumL, *str, 10, 0, countOfPrinted, 0); /////////////////
+            } else {
+                pointJump = s21_numToStr(ArgNum, *str, 10, 0, countOfPrinted, 0); /////////////////
+            }
+            *str = *str + pointJump;
+            for (int i = 0; i < amountOfSpaces; i++) {
+                **str = ' ';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            } 
+        } else {
+            for (int i = 0; i < amountOfSpaces; i++) {
+                **str = ' ';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            }
+            if (flags->space) {
+                **str = (isNegative) ? '-' : ' ';;
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';            
+            } else if (isNegative) {
+                **str = '-';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            } else if (flags->plus) {
+                **str = (isNegative) ? '-' : '+';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';            
+            }
+            for (int i = 0; i < amountOfZeroes; i++) {
+                **str = '0';
+                *countOfPrinted = *countOfPrinted + 1;
+                *str = *str + 1;
+                **str = '\0';
+            }
+            if (flags->len == 'h') {
+                pointJump = s21_numToStr(ArgNumS, *str, 10, 0, countOfPrinted, 0); /////////////////
+            } else if (flags->len == 'l') {
+                pointJump = s21_numToStr(ArgNumL, *str, 10, 0, countOfPrinted, 0); /////////////////
+            } else {
+                pointJump = s21_numToStr(ArgNum, *str, 10, 0, countOfPrinted, 0); /////////////////
+            }
+            *str = *str + pointJump;
+        }
+//СПЕЦЫФИКАТОР ФОРМАТА  %f
+    } else if (flags->placeHolder == 'd' || flags->placeHolder == 'i') {
+
+    }
 }

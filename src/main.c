@@ -8,8 +8,8 @@ int main() {
     char str2[100];
     //char str3[100] = "Andrey"; 
 
-    s21_sprintf(str1, "|%#10.3o|", 543);
-    sprintf(str2, "|%#10.3o|", 543);
+    s21_sprintf(str1, "|%- 10.15i|", -54);
+    sprintf(str2, "|%- 10.15i|", -54);
     printf("S21 %s\n", str1);
     printf("ORI %s\n", str2);     
 
